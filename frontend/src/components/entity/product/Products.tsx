@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useQuery } from 'react-query';
 import { api } from '../../../api/config';
 import { useTheme } from '../../../context/ThemeContext';
+import { useCart } from '../../../context/CartContext';
 
 interface Product {
   productId: number;
@@ -26,8 +27,10 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
   const { data: products, isLoading, error } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
+  const { addItem } = useCart();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -52,8 +55,12 @@ export default function Products() {
   const handleAddToCart = (productId: number) => {
     const quantity = quantities[productId] || 0;
     if (quantity > 0) {
-      // TODO: Implement cart functionality
-      alert(`Added ${quantity} items to cart`);
+      const product = products?.find((item) => item.productId === productId);
+      if (!product) {
+        return;
+      }
+      addItem(product, quantity);
+      setCartMessage(`${quantity} ${product.name} added to cart.`);
       setQuantities((prev) => ({
         ...prev,
         [productId]: 0,
@@ -103,6 +110,11 @@ export default function Products() {
           >
             Products
           </h1>
+          {cartMessage && (
+            <p className="text-sm text-primary" role="status" aria-live="polite">
+              {cartMessage}
+            </p>
+          )}
 
           <div className="relative">
             <input
